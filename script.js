@@ -18,11 +18,11 @@ const marker = L.marker([0, 0], { icon: issIcon }).addTo(map);
 // Function to get ISS location
 async function updateISS() {
     try {
-        const response = await fetch('https://api.open-notify.org/iss-now.json');
+        const response = await fetch('https://api.wheretheiss.at/v1/satellites/25544');
         const data = await response.json();
 
-        const lat = parseFloat(data.iss_position.latitude);
-        const lon = parseFloat(data.iss_position.longitude);
+        const lat = data.latitude;
+        const lon = data.longitude;
 
         const newPosition = [lat, lon];
 
@@ -32,10 +32,17 @@ async function updateISS() {
         document.getElementById('lat').textContent = lat.toFixed(2);
         document.getElementById('lon').textContent = lon.toFixed(2);
 
+        pathCoordinates.push(newPosition);
+        if (pathCoordinates.length > 60) pathCoordinates.shift();
+        pathLine.setLatLngs(pathCoordinates);
+
     } catch (error) {
         console.error("ISS fetch failed:", error);
     }
 }
+
+
+
 
 
 // Update every 5 seconds
