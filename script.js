@@ -10,6 +10,15 @@ const map = L.map('map', {
     maxZoom: 6
 }).setView([0, 0], 2);
 
+let followISS = true;
+
+document.getElementById("follow-btn").addEventListener("click", () => {
+    followISS = !followISS;
+    document.getElementById("follow-btn").textContent =
+        followISS ? "🛰 Follow ISS: ON" : "🛰 Follow ISS: OFF";
+});
+
+
 // Base OpenStreetMap layer (no repeating)
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors',
@@ -55,7 +64,10 @@ async function updateISS() {
         const newPosition = [lat, lon];
 
         marker.setLatLng(newPosition);
-        map.setView(newPosition, 3);
+        if (followISS) {
+            map.setView(newPosition, 3);
+        }
+
 
         document.getElementById('lat').textContent = lat.toFixed(2);
         document.getElementById('lon').textContent = lon.toFixed(2);
