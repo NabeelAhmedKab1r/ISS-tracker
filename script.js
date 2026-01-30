@@ -1,10 +1,19 @@
-// Create map centered at Earth view
+// Create the map
 const map = L.map('map').setView([0, 0], 2);
 
-// Add map tiles
+// Base map layer
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
+
+// 🌗 Night/Day Overlay using NASA global night image
+const nightLayer = L.tileLayer(
+    'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_CityLights_2012/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg',
+    {
+        opacity: 0.4,
+        attribution: 'NASA Earth Observatory'
+    }
+).addTo(map);
 
 // Create ISS icon
 const issIcon = L.icon({
@@ -12,10 +21,17 @@ const issIcon = L.icon({
     iconSize: [50, 32],
 });
 
-// Add marker
+// Add ISS marker
 const marker = L.marker([0, 0], { icon: issIcon }).addTo(map);
 
-// Function to get ISS location
+// Trail path storage
+let pathCoordinates = [];
+let pathLine = L.polyline(pathCoordinates, {
+    color: 'cyan',
+    weight: 3
+}).addTo(map);
+
+// Fetch ISS data and update map
 async function updateISS() {
     try {
         const response = await fetch('https://api.wheretheiss.at/v1/satellites/25544');
@@ -41,10 +57,8 @@ async function updateISS() {
     }
 }
 
-
-
-
+// Initial update
+updateISS();
 
 // Update every 5 seconds
-updateISS();
 setInterval(updateISS, 5000);
