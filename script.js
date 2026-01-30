@@ -11,11 +11,20 @@ const map = L.map('map', {
 }).setView([0, 0], 2);
 
 let followISS = true;
+let previousPosition = null;
 
-document.getElementById("follow-btn").addEventListener("click", () => {
+const followBtn = document.getElementById("follow-btn");
+
+followBtn.addEventListener("click", () => {
     followISS = !followISS;
-    document.getElementById("follow-btn").textContent =
-        followISS ? "🛰 Follow ISS: ON" : "🛰 Follow ISS: OFF";
+    followBtn.textContent = followISS ? "Follow ISS: ON" : "Follow ISS: OFF";
+    followBtn.classList.toggle("off", !followISS);
+
+    if (followISS) {
+        visibilityCircle.addTo(map);
+    } else {
+        map.removeLayer(visibilityCircle);
+    }
 });
 
 
@@ -25,7 +34,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     noWrap: true
 }).addTo(map);
 
-// 🌃 NASA Night Lights Overlay (limited zoom range)
+// 🌃 NASA Night Lights Overlay
 const nightLayer = L.tileLayer(
     'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_CityLights_2012/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg',
     {
@@ -37,21 +46,49 @@ const nightLayer = L.tileLayer(
     }
 ).addTo(map);
 
-// ISS icon
+// Rotatable ISS icon
 const issIcon = L.icon({
     iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/International_Space_Station.svg',
     iconSize: [50, 32],
+    iconAnchor: [25, 16]
 });
 
-// Marker
-const marker = L.marker([0, 0], { icon: issIcon }).addTo(map);
+// Marker with rotation support
+const marker = L.marker([0, 0], {
+    icon: issIcon,
+    rotationAngle: 0
+}).addTo(map);
 
-// Trail
+// Trail line
 let pathCoordinates = [];
 let pathLine = L.polyline(pathCoordinates, {
     color: 'cyan',
     weight: 3
 }).addTo(map);
+
+//  Visibility circle
+let visibilityCircle = L.circle([0, 0], {
+    radius: 1200000,
+    color: '#00eaff',
+    weight: 1,
+    opacity: 0.5,
+    fillOpacity: 0.03
+}).addTo(map);
+
+
+// Calculate direction angle between two points
+function getBearing(lat1, lon1, lat2, lon2) {
+    const toRad = deg => deg * Math.PI / 180;
+    const toDeg = rad => rad * 180 / Math.PI;
+
+    const dLon = toRad(lon2 - lon1);
+    const y = Math.sin(dLon) * Math.cos(toRad(lat2));
+    const x =
+        Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
+        Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(dLon);
+
+    return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
 
 // Update ISS position
 async function updateISS() {
@@ -64,10 +101,24 @@ async function updateISS() {
         const newPosition = [lat, lon];
 
         marker.setLatLng(newPosition);
+        visibilityCircle.setLatLng(newPosition);
+
+        // Rotate ISS icon in movement direction
+        if (previousPosition) {
+            const bearing = getBearing(
+                previousPosition[0],
+                previousPosition[1],
+                lat,
+                lon
+            );
+            marker.setRotationAngle(bearing);
+        }
+
+        previousPosition = newPosition;
+
         if (followISS) {
             map.setView(newPosition, 3);
         }
-
 
         document.getElementById('lat').textContent = lat.toFixed(2);
         document.getElementById('lon').textContent = lon.toFixed(2);
