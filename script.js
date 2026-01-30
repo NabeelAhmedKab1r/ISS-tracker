@@ -1,17 +1,26 @@
-// Create the map
-const map = L.map('map').setView([0, 0], 2);
+// Create the map with world bounds locked
+const map = L.map('map', {
+    worldCopyJump: false,
+    maxBounds: [
+        [-90, -180],
+        [90, 180]
+    ],
+    maxBoundsViscosity: 1.0
+}).setView([0, 0], 2);
 
-// Base map layer
+// Base map layer (no wrap)
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
+    attribution: '© OpenStreetMap contributors',
+    noWrap: true
 }).addTo(map);
 
-// 🌗 Night/Day Overlay using NASA global night image
+// 🌃 NASA Night Lights Overlay (also no wrap)
 const nightLayer = L.tileLayer(
     'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_CityLights_2012/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg',
     {
         opacity: 0.4,
-        attribution: 'NASA Earth Observatory'
+        attribution: 'NASA Earth Observatory',
+        noWrap: true
     }
 ).addTo(map);
 
